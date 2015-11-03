@@ -1,40 +1,40 @@
 /******************************************************************************
-    Web Easy Switch Company module for OpenERP
-    Copyright (C) 2014 GRAP (http://www.grap.coop)
-    @author Sylvain LE GAL (https://twitter.com/legalsylvain)
+ Web Easy Switch Company module for OpenERP
+ Copyright (C) 2014 GRAP (http://www.grap.coop)
+ @author Sylvain LE GAL (https://twitter.com/legalsylvain)
 
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Affero General Public License as
-    published by the Free Software Foundation, either version 3 of the
-    License, or (at your option) any later version.
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU Affero General Public License as
+ published by the Free Software Foundation, either version 3 of the
+ License, or (at your option) any later version.
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Affero General Public License for more details.
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU Affero General Public License for more details.
 
-    You should have received a copy of the GNU Affero General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-******************************************************************************/
+ You should have received a copy of the GNU Affero General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ ******************************************************************************/
 
 openerp.web_easy_switch_company = function (instance) {
 
     /***************************************************************************
-    Create an new 'SwitchCompanyWidget' widget that allow users to switch 
-    from a company to another more easily.
-    ***************************************************************************/
+     Create an new 'SwitchCompanyWidget' widget that allow users to switch
+     from a company to another more easily.
+     ***************************************************************************/
     instance.web.SwitchCompanyWidget = instance.web.Widget.extend({
 
-        template:'web_easy_switch_company.SwitchCompanyWidget',
+        template: 'web_easy_switch_company.SwitchCompanyWidget',
 
         /***********************************************************************
-        Overload section 
-        ***********************************************************************/
+         Overload section
+         ***********************************************************************/
 
         /**
          * Overload 'init' function to initialize the values of the widget.
          */
-        init: function(parent){
+        init: function (parent) {
             this._super(parent);
             this.companies = [];
             this.current_company_id = 0;
@@ -52,22 +52,22 @@ openerp.web_easy_switch_company = function (instance) {
         /**
          * Overload 'renderElement' function to set events on company items.
          */
-        renderElement: function() {
+        renderElement: function () {
             var self = this;
             this._super();
             if (this.companies.length === 1) {
                 this.$el.hide();
             }
-            else{
+            else {
                 this.$el.show();
-                this.$el.find('.easy_switch_company_company_item').on('click', function(ev) {
+                this.$el.find('.easy_switch_company_company_item').on('click', function (ev) {
                     var company_id = $(ev.target).data("company-id");
 
 
-                    if (company_id != self.current_company_id){
+                    if (company_id != self.current_company_id) {
                         var func = '/web_easy_switch_company/switch/change_current_company';
                         var param = {'company_id': company_id}
-                        self.rpc(func, param).done(function(res) {
+                        self.rpc(func, param).done(function (res) {
                             window.location.reload()
                         });
                     }
@@ -77,13 +77,13 @@ openerp.web_easy_switch_company = function (instance) {
 
 
         /***********************************************************************
-        Custom section 
-        ***********************************************************************/
+         Custom section
+         ***********************************************************************/
 
         /**
          * helper function to load data from the server
          */
-        _fetch: function(model, fields, domain, ctx){
+        _fetch: function (model, fields, domain, ctx) {
             return new instance.web.Model(model).query(fields).filter(domain).context(ctx).all();
         },
 
@@ -91,10 +91,10 @@ openerp.web_easy_switch_company = function (instance) {
          * - Load data of the companies allowed to the current users;
          * - Launch the rendering of the current widget;
          */
-        _load_data: function(){
+        _load_data: function () {
             var self = this;
             // Request for current users information
-            this._fetch('res.users',['company_id'],[['id','=',this.session.uid]]).then(function(res_users){
+            this._fetch('res.users', ['company_id'], [['id', '=', this.session.uid]]).then(function (res_users) {
                 self.current_company_id = res_users[0].company_id[0];
                 self.current_company_name = res_users[0].company_id[1];
                 // Request for other companies
@@ -104,23 +104,29 @@ openerp.web_easy_switch_company = function (instance) {
                 // Note: calling res.company.name_search with 
                 //       user_preference=True in the context does 
                 //       not work either.
-                new instance.web.Model('res.company').call('name_search',{context:{'user_preference':'True'}}).then(function(res){
+                new instance.web.Model('res.company').call('name_search', {context: {'user_preference': 'True'}}).then(function (res) {
                     var res_company = res;
-                    for ( var i=0 ; i < res_company.length; i++) {
+
+                    res_company.sort(function (a, b) {
+                        return a[1] > b[1] ? 1 : -1;
+                    });
+
+
+                    for (var i = 0; i < res_company.length; i++) {
                         var logo_topbar, logo_state;
                         // TODO: fetching the logo of other companies fails with the
                         //       default res.company record rule, so we should
                         //       probably remove the logos from the menu :(
                         logo_topbar = self.session.url(
                             '/web/binary/image', {
-                                model:'res.company', 
-                                field: 'logo_topbar', 
+                                model: 'res.company',
+                                field: 'logo_topbar',
                                 id: res_company[i][0]
                             });
-                        if (res_company[i][0] == self.current_company_id){
+                        if (res_company[i][0] == self.current_company_id) {
                             logo_state = '/web_easy_switch_company/static/description/selection-on.png';
                         }
-                        else{
+                        else {
                             logo_state = '/web_easy_switch_company/static/description/selection-off.png';
                         }
                         self.companies.push({
@@ -139,11 +145,11 @@ openerp.web_easy_switch_company = function (instance) {
     });
 
     /***************************************************************************
-    Extend 'UserMenu' Widget to insert a 'SwitchCompanyWidget' widget.
-    ***************************************************************************/
-    instance.web.UserMenu =  instance.web.UserMenu.extend({
+     Extend 'UserMenu' Widget to insert a 'SwitchCompanyWidget' widget.
+     ***************************************************************************/
+    instance.web.UserMenu = instance.web.UserMenu.extend({
 
-        init: function(parent) {
+        init: function (parent) {
             this._super(parent);
             var switch_button = new instance.web.SwitchCompanyWidget();
             switch_button.appendTo(instance.webclient.$el.find('.oe_systray'));
