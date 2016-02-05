@@ -107,9 +107,20 @@ openerp.web_easy_switch_company = function (instance) {
                 new instance.web.Model('res.company').call('name_search', {context: {'user_preference': 'True'}}).then(function (res) {
                     var res_company = res;
 
-                    res_company.sort(function (a, b) {
-                        return a[1] > b[1] ? 1 : -1;
-                    });
+                    res_company.sort(function(o1, o2) {
+                       var a = o1[1].split(/(\d+|\D+)/).filter(function(s){return s!=""});
+                       var b = o2[1].split(/(\d+|\D+)/).filter(function(s){return s!=""});
+                       for (var cmp = 0, i = 0; 0 == cmp && i < a.length && i < b.length; i++) {
+                         var n1 = a[i] - 0, n2 = b[i] - 0;
+                         if (!isNaN(n1) && !isNaN(n2))
+                           cmp = n1 - n2;
+                         else if (a[i] < b[i])
+                           cmp = -1;
+                         else if (a[i] > b[i])
+                           cmp = 1;
+                       }
+                       return cmp;
+                     });
 
 
                     for (var i = 0; i < res_company.length; i++) {
