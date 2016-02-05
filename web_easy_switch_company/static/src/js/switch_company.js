@@ -39,6 +39,7 @@ openerp.web_easy_switch_company = function (instance) {
             this.companies = [];
             this.current_company_id = 0;
             this.current_company_name = '';
+            this.current_uid = this.session.uid
         },
 
         /**
@@ -104,7 +105,7 @@ openerp.web_easy_switch_company = function (instance) {
                 // Note: calling res.company.name_search with 
                 //       user_preference=True in the context does 
                 //       not work either.
-                new instance.web.Model('res.company').call('name_search', {context: {'user_preference': 'True'}}).then(function (res) {
+                new instance.web.Model('res.company').call('name_search', {context: {'uid': self.current_uid, 'user_preference': 'True'}}).then(function (res) {
                     var res_company = res;
 
                     res_company.sort(function(o1, o2) {
